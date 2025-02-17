@@ -245,7 +245,6 @@ describe('editor3.reducers', () => {
 
         expect(text).toBe('apple banana kiwi ananas apple prune');
     });
-
     it('HIGHLIGHTS_FIND_REPLACE_ALL', () => {
         const startState = withSearchTerm(
             'apple banana apple ananas apple prune',
@@ -261,6 +260,40 @@ describe('editor3.reducers', () => {
 
         expect(text).toBe('kiwi banana kiwi ananas kiwi prune');
     });
+
+
+    it('HIGHLIGHTS_FIND_REPLACE_UPDATE - Replace only the first $ with $AUD', () => {
+        const startState = withSearchTerm(
+            'I have $100 in my wallet. The total cost is $50, but sometimes it is $AUD60.',
+            {index: 0, pattern: '$', caseSensitive: false},
+        );
+
+        const state = reducer(startState, {
+            type: 'HIGHLIGHTS_REPLACE',
+            payload: '$AUD',
+        });
+
+        const text = state.editorState.getCurrentContent().getPlainText('\n');
+
+        expect(text).toBe('I have $AUD100 in my wallet. The total cost is $50, but sometimes it is $AUD60.');
+    });
+
+    it('HIGHLIGHTS_FIND_REPLACE_ALL_UPDATE - Replace all $ with $AUD', () => {
+        const startState = withSearchTerm(
+            'I have $100 in my wallet. The total cost is $50, but sometimes it is $AUD60.',
+            {index: 0, pattern: '$', caseSensitive: false},
+        );
+
+        const state = reducer(startState, {
+            type: 'HIGHLIGHTS_REPLACE_ALL',
+            payload: '$AUD',
+        });
+
+        const text = state.editorState.getCurrentContent().getPlainText('\n');
+
+        expect(text).toBe('I have $AUD100 in my wallet. The total cost is $AUD50, but sometimes it is $AUD60.');
+    });
+
 
     it('SPELLCHECKER_REPLACE_WORD', () => {
         const editorState = EditorState.createWithContent(
