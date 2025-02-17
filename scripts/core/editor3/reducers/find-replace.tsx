@@ -1,6 +1,4 @@
-// eslint complains about imported types not being used
-// eslint-disable-next-line no-unused-vars
-import {Modifier, EditorState} from 'draft-js';
+import {Modifier, EditorState, SelectionState} from 'draft-js';
 import {clearHighlights, quietPush, forEachMatch} from '../helpers/find-replace';
 import {onChange} from './editor3';
 import {escapeRegExp} from 'core/utils';
@@ -37,15 +35,18 @@ const findReplace = (state = {}, action) => {
 const replaceHighlight = (state, txt, all = false) => {
     const {index, pattern, caseSensitive, diff} = state.searchTerm;
     const es = state.editorState;
-
     let contentChanged = false;
     let contentChangedInAll = true;
     let {content, editorState} = clearHighlights(es.getCurrentContent(), es);
 
     const regexp = getRegExp(diff, pattern, caseSensitive);
+    const createSelection = (key: string, start: number, end: number): SelectionState =>
+    SelectionState.createEmpty(key).merge({
+        anchorOffset: start,
+        focusOffset: end,
+    }) as SelectionState;
 
-    // tries to replace the occurrence at position pos and returns true if successful.
-    const replaceAt = (pos, _content) =>
+    const replaceAtIndex = (pos, _content) =>
         forEachMatch(_content, regexp, caseSensitive, (i, selection, block, newContent) => {
             if (i === pos) {
                 // let's preserve styling and entities (such as links) on replacing
@@ -58,21 +59,53 @@ const replaceHighlight = (state, txt, all = false) => {
             }
             return newContent;
         });
-
-    if (all) {
-        // each replace alters the content and changes text offsets, so we need to call this method repeatedly
-        while (contentChangedInAll) {
-            contentChangedInAll = false;
-            content = replaceAt(0, content);
+    const replaceAtAll = (_content) => {
+        if (!regexp) {
+            return false;
         }
-    } else {
-        content = replaceAt(index, content);
-    }
+        let newContent = content = _content;
+
+        content.getBlocksAsArray().forEach((block) => {
+            const key = block.getKey();
+            const text = block.getText();
+
+            let match;
+            let selection;
+            let lengthDifference = 0;
+
+            // eslint-disable-next-line no-cond-assign
+            while (match = regexp.exec(text)) {
+                const adjustedIndex = match.index + lengthDifference;
+
+                if (adjustedIndex < 0 || adjustedIndex >= text.length) {
+                    continue;
+                }
+
+                const updatedBlock = newContent.getBlockForKey(key);
+                const updatedText = updatedBlock.getText();
+
+                if (updatedText.substring(adjustedIndex, adjustedIndex + txt.length) === txt) {
+                    continue;
+                }
+
+
+                selection = createSelection(key, adjustedIndex, adjustedIndex + match[0].length);
+                const styleAt = block.getInlineStyleAt(selection.anchorOffset) || null;
+                const entityAt = block.getEntityAt(selection.anchorOffset) || null;
+
+                contentChanged = true;
+                newContent = Modifier.replaceText(newContent, selection, txt, styleAt, entityAt);
+                lengthDifference += txt.length - match[0].length;
+            }
+        });
+        return newContent;
+    };
+
+    content = all ? replaceAtAll(content) : typeof index === 'number' ? replaceAtIndex(index, content) : content;
 
     if (contentChanged) {
         editorState = EditorState.push(editorState, content, 'insert-characters');
     }
-
     const editorStateChanged = onChange(state, editorState);
 
     return {
@@ -181,7 +214,6 @@ const render = (state) => {
 
     return {...state, editorState};
 };
-
 export default findReplace;
 
 /**
