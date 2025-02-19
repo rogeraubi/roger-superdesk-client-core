@@ -381,9 +381,12 @@ describe('editor3.reducers', () => {
         Here is $ next to words, like $money and $value.
         Another test: $$$ should all be replaced correctly.`,
         );
-
+        const startStateAll = withSearchTerm(
+            textSingleReplace,
+            {index: 0, pattern: '$', caseSensitive: false},
+        );
         //  Replace && check all
-        const stateReplaceAll = reducer(startState, {
+        const stateReplaceAll = reducer(startStateAll, {
             type: 'HIGHLIGHTS_REPLACE_ALL',
             payload: '$AUD',
         });
