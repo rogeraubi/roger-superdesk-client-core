@@ -401,7 +401,6 @@ describe('editor3.reducers', () => {
         Another test: $AUD$AUD$AUD should all be replaced correctly.`,
         );
     });
-
     it('SPELLCHECKER_REPLACE_WORD', () => {
         const editorState = EditorState.createWithContent(
             ContentState.createFromText('abcd efgh'),
