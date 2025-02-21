@@ -260,150 +260,6 @@ describe('editor3.reducers', () => {
 
         expect(text).toBe('kiwi banana kiwi ananas kiwi prune');
     });
-
-    it('HIGHLIGHTS_FIND_REPLACE_UPDATE - Replace only the first $ with $AUD', () => {
-        const startState = withSearchTerm(
-            'I have $100 in my wallet. The total cost is $50, but sometimes it is $AUD60.',
-            {index: 0, pattern: '$', caseSensitive: false},
-        );
-
-        const state = reducer(startState, {
-            type: 'HIGHLIGHTS_REPLACE',
-            payload: '$AUD',
-        });
-
-        const text = state.editorState.getCurrentContent().getPlainText('\n');
-
-        expect(text).toBe('I have $AUD100 in my wallet. The total cost is $50, but sometimes it is $AUD60.');
-    });
-
-    it('HIGHLIGHTS_FIND_REPLACE_ALL_UPDATE - Replace all $ with $AUD ,but no change with $AUD', () => {
-        const startState = withSearchTerm(
-            'I have $100 in my wallet. The total cost is $50, but sometimes it is $AUD60.',
-            {index: 0, pattern: '$', caseSensitive: false},
-        );
-
-        const state = reducer(startState, {
-            type: 'HIGHLIGHTS_REPLACE_ALL',
-            payload: '$AUD',
-        });
-
-        const text = state.editorState.getCurrentContent().getPlainText('\n');
-
-        expect(text).toBe('I have $AUD100 in my wallet. The total cost is $AUD50, but sometimes it is $AUD60.');
-    });
-
-    it('HIGHLIGHTS_FIND_REPLACE_COMPLEX_CURRENCY', () => {
-        const startState = withSearchTerm(
-            `I have $AUD100 in my wallet.
-        The total cost is $AUD50, but sometimes it's $AUD60.
-        She said "$AUD" is just a symbol.
-        $AUD should be replaced, but $AUD should not change.
-        The exchange rate is 1$ = 1.3AUD.
-        USD is the currency code for the US Dollar.
-        Here is $ next to words, like $money and $value.
-        Another test: $AUD$AUD$AUD should all be replaced correctly.`,
-            {index: 0, pattern: '$', caseSensitive: false},
-        );
-
-        const state = reducer(startState, {
-            type: 'HIGHLIGHTS_REPLACE_ALL',
-            payload: '$AUD',
-        });
-
-        const text = state.editorState.getCurrentContent().getPlainText('\n');
-
-        expect(text).toBe(
-            `I have $AUD100 in my wallet.
-        The total cost is $AUD50, but sometimes it's $AUD60.
-        She said "$AUD" is just a symbol.
-        $AUD should be replaced, but $AUD should not change.
-        The exchange rate is 1$AUD = 1.3AUD.
-        USD is the currency code for the US Dollar.
-        Here is $AUD next to words, like $AUDmoney and $AUDvalue.
-        Another test: $AUD$AUD$AUD should all be replaced correctly.`,
-        );
-    });
-
-    it('HIGHLIGHTS_FIND_REPLACE_GENERAL_WORD_ALL_LOWERCASE', () => {
-        const startState = withSearchTerm(
-            `I love eating fruit.
-        My favorite fruit is apple, but sometimes I prefer tropical fruit.
-        "Fruit" is a broad category.
-        The fruit market is booming.
-        This fruit-based diet is very healthy.`,
-            {index: 0, pattern: 'fruit', caseSensitive: false},
-        );
-
-        const state = reducer(startState, {
-            type: 'HIGHLIGHTS_REPLACE_ALL',
-            payload: 'veggie',
-        });
-
-        let text = state.editorState.getCurrentContent().getPlainText('\n').toLowerCase();
-
-        expect(text).toBe(
-            `i love eating veggie.
-        my favorite veggie is apple, but sometimes i prefer tropical veggie.
-        "veggie" is a broad category.
-        the veggie market is booming.
-        this veggie-based diet is very healthy.`,
-        );
-    });
-
-    it('HIGHLIGHTS_FIND_REPLACE_SINGLE_AND_REPLACE_ALL', () => {
-        const startState = withSearchTerm(
-            `I have $100 in my wallet.
-        The total cost is $50, but sometimes it's $60.
-        She said "$" is just a symbol.
-        $ should be replaced, but $AUD should not change.
-        The exchange rate is 1$ = 1.3AUD.
-        USD is the currency code for the US Dollar.
-        Here is $ next to words, like $money and $value.
-        Another test: $$$ should all be replaced correctly.`,
-            {index: 0, pattern: '$', caseSensitive: false},
-        );
-
-        const stateSingleReplace = reducer(startState, {
-            type: 'HIGHLIGHTS_REPLACE',
-            payload: '$AUD',
-        });
-
-        const textSingleReplace = stateSingleReplace.editorState.getCurrentContent().getPlainText('\n');
-
-        expect(textSingleReplace).toBe(
-            `I have $AUD100 in my wallet.
-        The total cost is $50, but sometimes it's $60.
-        She said "$" is just a symbol.
-        $ should be replaced, but $AUD should not change.
-        The exchange rate is 1$ = 1.3AUD.
-        USD is the currency code for the US Dollar.
-        Here is $ next to words, like $money and $value.
-        Another test: $$$ should all be replaced correctly.`,
-        );
-        const startStateAll = withSearchTerm(
-            textSingleReplace,
-            {index: 0, pattern: '$', caseSensitive: false},
-        );
-        //  Replace && check all
-        const stateReplaceAll = reducer(startStateAll, {
-            type: 'HIGHLIGHTS_REPLACE_ALL',
-            payload: '$AUD',
-        });
-
-        const textReplaceAll = stateReplaceAll.editorState.getCurrentContent().getPlainText('\n');
-
-        expect(textReplaceAll).toBe(
-            `I have $AUD100 in my wallet.
-        The total cost is $AUD50, but sometimes it's $AUD60.
-        She said "$AUD" is just a symbol.
-        $AUD should be replaced, but $AUD should not change.
-        The exchange rate is 1$AUD = 1.3AUD.
-        USD is the currency code for the US Dollar.
-        Here is $AUD next to words, like $AUDmoney and $AUDvalue.
-        Another test: $AUD$AUD$AUD should all be replaced correctly.`,
-        );
-    });
     it('SPELLCHECKER_REPLACE_WORD', () => {
         const editorState = EditorState.createWithContent(
             ContentState.createFromText('abcd efgh'),
@@ -589,5 +445,118 @@ describe('editor3.reducers', () => {
 
         expect(block.getInlineStyleAt(10).toArray()).toContain(LIMIT_CHARACTERS_OVERFLOW_STYLE);
         expect(block.getInlineStyleAt(9).toArray()).not.toContain(LIMIT_CHARACTERS_OVERFLOW_STYLE);
+    });
+});
+
+describe('Find and Replace Functionality', () => {
+    describe('Single Replacement', () => {
+        it('replaces only the first occurrence of "$" with "$AUD"', () => {
+            const initialText = 'I have $100. The cost is $50,sometimes it is $AUD60.';
+            const searchConfig = {index: 0, pattern: '$', caseSensitive: false};
+            const startState = withSearchTerm(initialText, searchConfig);
+
+            const updatedState = reducer(startState, {
+                type: 'HIGHLIGHTS_REPLACE',
+                payload: '$AUD',
+            });
+
+            const resultText = updatedState.editorState.getCurrentContent().getPlainText('\n');
+
+            expect(resultText).toBe('I have $AUD100. The cost is $50,sometimes it is $AUD60.');
+        });
+    });
+
+    describe('Replace All', () => {
+        it('replaces all "$" with "$AUD" without duplicating existing "$AUD"', () => {
+            const initialText = 'I have $100 in my wallet. The total cost is $50, but sometimes it is $AUD60.';
+            const searchConfig = {index: 0, pattern: '$', caseSensitive: false};
+            const startState = withSearchTerm(initialText, searchConfig);
+
+            const updatedState = reducer(startState, {
+                type: 'HIGHLIGHTS_REPLACE_ALL',
+                payload: '$AUD',
+            });
+
+            const resultText = updatedState.editorState.getCurrentContent().getPlainText('\n');
+
+            // tslint:disable-next-line:max-line-length
+            expect(resultText).toBe('I have $AUD100 in my wallet. The total cost is $AUD50, but sometimes it is $AUD60.');
+        });
+
+        it('replaces all instances of "fruit" with "veggie" and verifies lowercase output', () => {
+            const initialText =
+            // tslint:disable-next-line:max-line-length
+        'I love eating fruit,My favorite fruit is apple, but sometimes I prefer tropical fruit."Fruit" is a broad category The fruit market is booming.';
+            const searchConfig = {index: 0, pattern: 'fruit', caseSensitive: false};
+            const startState = withSearchTerm(initialText, searchConfig);
+
+            const updatedState = reducer(startState, {
+                type: 'HIGHLIGHTS_REPLACE_ALL',
+                payload: 'veggie',
+            });
+
+            const resultText = updatedState.editorState.getCurrentContent().getPlainText('\n').toLowerCase();
+
+            expect(resultText).toBe(
+                // tslint:disable-next-line:max-line-length
+                'i love eating veggie,my favorite veggie is apple, but sometimes i prefer tropical veggie."veggie" is a broad category the veggie market is booming.',
+            );
+        });
+    });
+
+    // Combined Replacement Tests
+    describe('Combined Replacement Scenarios', () => {
+        it('replaces first "$" with "$AUD" then replaces all remaining "$" occurrences', () => {
+            const initialText = 'Total: $100, cost: $50, rate: 1$ = 1.3AUD.';
+            const searchConfig = {index: 0, pattern: '$', caseSensitive: false};
+            const startState = withSearchTerm(initialText, searchConfig);
+
+            const stateSingleReplace = reducer(startState, {
+                type: 'HIGHLIGHTS_REPLACE',
+                payload: '$AUD',
+            });
+            const textSingleReplace = stateSingleReplace.editorState.getCurrentContent().getPlainText('\n');
+
+            // First replacement
+            expect(textSingleReplace).toBe('Total: $AUD100, cost: $50, rate: 1$ = 1.3AUD.');
+
+            // Replace all after first replacement
+            const startStateAll = withSearchTerm(textSingleReplace, searchConfig);
+            const stateReplaceAll = reducer(startStateAll, {
+                type: 'HIGHLIGHTS_REPLACE_ALL',
+                payload: '$AUD',
+            });
+            const textReplaceAll = stateReplaceAll.editorState.getCurrentContent().getPlainText('\n');
+
+            // Final replacement
+            expect(textReplaceAll).toBe('Total: $AUD100, cost: $AUD50, rate: 1$AUD = 1.3AUD.');
+        });
+
+        it('finds next "$", replaces it with "$AUD", then replaces all remaining "$" occurrences', () => {
+            // Arrange
+            const initialText = 'Total: $100, cost: $50, rate: 1$ = 1.3AUD.';
+            const searchConfig = {index: 0, pattern: '$', caseSensitive: false};
+            const startState = withSearchTerm(initialText, searchConfig);
+
+            const stateFindNext = reducer(startState, {type: 'HIGHLIGHTS_FIND_NEXT'});
+
+            expect(stateFindNext.searchTerm.index).toBe(1);
+
+            const stateSingleReplace = reducer(stateFindNext, {
+                type: 'HIGHLIGHTS_REPLACE',
+                payload: '$AUD',
+            });
+            const textSingleReplace = stateSingleReplace.editorState.getCurrentContent().getPlainText('\n');
+
+            expect(textSingleReplace).toBe('Total: $100, cost: $AUD50, rate: 1$ = 1.3AUD.');
+
+            const stateReplaceAll = reducer(stateSingleReplace, {
+                type: 'HIGHLIGHTS_REPLACE_ALL',
+                payload: '$AUD',
+            });
+            const textReplaceAll = stateReplaceAll.editorState.getCurrentContent().getPlainText('\n');
+
+            expect(textReplaceAll).toBe('Total: $AUD100, cost: $AUD50, rate: 1$AUD = 1.3AUD.');
+        });
     });
 });
